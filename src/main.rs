@@ -1,5 +1,5 @@
 use std::{println, print, io::{stdin, Read}, thread::sleep, time::Duration};
-use ansi_escapes::{EraseLine, CursorUp};
+use ansi_escapes::CursorUp;
 use rand::{self, distributions::Uniform, prelude::Distribution};
 
 const PAUSE_TIME: u64 = 25;
@@ -100,6 +100,7 @@ fn print_hidden(text: &Vec<Vec<HiddenChar>>) {
             String::from_iter(t)
         })
         .collect::<Vec<String>>();
+
     for line in lines {
         println!("{line}");
     }
@@ -119,10 +120,7 @@ fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
                     .iter_mut()
                     .for_each(|c| c.mask = MASK_CHARS[rr.sample(&mut rng)])
             });
-        for _ in 0..text.len() {
-            print!("{}", CursorUp(1));
-            print!("{}", EraseLine);
-        }
+        print!("{}", CursorUp(text.len() as u16));
         print_hidden(text);
     }
 
@@ -158,10 +156,7 @@ fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
             }
         }
 
-        for _ in 0..text.len() {
-            print!("{}", CursorUp(1));
-            print!("{}", EraseLine);
-        }
+        print!("{}", CursorUp(text.len() as u16));
         print_hidden(text);
         sleep(Duration::from_millis(PAUSE_TIME));
     }
