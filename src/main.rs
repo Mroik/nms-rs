@@ -77,7 +77,7 @@ struct HiddenChar {
 
 fn parse_input(input: &str) -> Vec<Vec<HiddenChar>> {
     let mut rng = rand::thread_rng();
-    let rr = Uniform::from(0..153);
+    let rr = Uniform::from(0..253);
 
     return input
         .split('\n')
@@ -108,7 +108,7 @@ fn print_hidden(text: &Vec<Vec<HiddenChar>>) {
 
 fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
     let mut rng = rand::thread_rng();
-    let rr = Uniform::from(0..153);
+    let rr = Uniform::from(0..253);
 
     let mut enc_lines: Vec<usize> = (0..text.len()).collect();
     for _ in 0..40 {
