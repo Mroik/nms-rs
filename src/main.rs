@@ -2,6 +2,7 @@ use std::{println, print, io::{stdin, Read}, thread::sleep, time::Duration};
 use ansi_escapes::{EraseLine, CursorUp};
 use rand::{self, distributions::Uniform, prelude::Distribution};
 
+const PAUSE_TIME: u64 = 25;
 const MASK_CHARS: [char; 253] = [
     '\u{263A}', '\u{263B}', '\u{2665}',
     '\u{2666}', '\u{2663}', '\u{2660}', '\u{2022}',
@@ -110,7 +111,7 @@ fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
 
     let mut enc_lines: Vec<usize> = (0..text.len()).collect();
     for _ in 0..40 {
-        sleep(Duration::from_millis(40));
+        sleep(Duration::from_millis(PAUSE_TIME));
         text
             .iter_mut()
             .for_each(|line| {
@@ -162,7 +163,7 @@ fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
             print!("{}", EraseLine);
         }
         print_hidden(text);
-        sleep(Duration::from_millis(40));
+        sleep(Duration::from_millis(PAUSE_TIME));
     }
 }
 
