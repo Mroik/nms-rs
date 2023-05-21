@@ -1,4 +1,4 @@
-use std::{println, print, io::{stdin, Read}, thread::sleep, time::Duration};
+use std::{println, print, io::{stdin, Read, stdout, Write}, thread::sleep, time::Duration};
 use ansi_escapes::CursorUp;
 use rand::{self, distributions::Uniform, prelude::Distribution};
 
@@ -84,7 +84,7 @@ fn parse_input(input: &str) -> Vec<Vec<HiddenChar>> {
         .filter(|line| !line.is_empty())
         .map(|line| line
              .chars()
-             .map(|c| HiddenChar {src: c, mask: MASK_CHARS[rr.sample(&mut rng)]})
+             .map(|c| HiddenChar {src: c, mask: if c == ' ' { ' ' } else { MASK_CHARS[rr.sample(&mut rng)] }})
              .collect()
         )
         .collect();
@@ -118,7 +118,7 @@ fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
             .for_each(|line| {
                 line
                     .iter_mut()
-                    .for_each(|c| c.mask = MASK_CHARS[rr.sample(&mut rng)])
+                    .for_each(|c| if c.mask != ' ' { c.mask = MASK_CHARS[rr.sample(&mut rng)] })
             });
         print!("{}", CursorUp(text.len() as u16));
         print_hidden(text);
@@ -166,6 +166,13 @@ fn main() {
     let mut buf = String::new();
     stdin().read_to_string(&mut buf).unwrap();
     let mut text = parse_input(&buf);
-    print_hidden(&text);
+    for line in &text {
+        for c in line {
+            print!("{}", c.mask);
+            stdout().flush().unwrap();
+            sleep(Duration::from_millis(PAUSE_TIME));
+        }
+        println!();
+    }
     decrypt(&mut text);
 }
