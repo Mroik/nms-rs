@@ -74,13 +74,13 @@ struct HiddenChar {
     mask: char,
 }
 
-fn parse_input(input: &String) -> Vec<Vec<HiddenChar>> {
+fn parse_input(input: &str) -> Vec<Vec<HiddenChar>> {
     let mut rng = rand::thread_rng();
     let rr = Uniform::from(0..153);
 
     return input
-        .split("\n")
-        .filter(|line| line.len() > 0)
+        .split('\n')
+        .filter(|line| !line.is_empty())
         .map(|line| line
              .chars()
              .map(|c| HiddenChar {src: c, mask: MASK_CHARS[rr.sample(&mut rng)]})
@@ -136,9 +136,9 @@ fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
             .filter(|(c, _)| c.mask != c.src)
             .map(|(_, i)| i)
             .collect();
-        if non_enc.len() == 0 {
+        if non_enc.is_empty() {
             enc_lines.retain(|&it| it != chosen_line);
-            if enc_lines.len() == 0 {
+            if enc_lines.is_empty() {
                 break;
             }
             continue;
