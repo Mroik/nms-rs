@@ -2,7 +2,7 @@ use std::{println, print, io::{stdin, Read, stdout, Write}, thread::sleep, time:
 use rand::{self, distributions::Uniform, prelude::Distribution};
 
 mod ansi;
-use ansi::AnsiCodes::CursorUp;
+use ansi::AnsiCodes::{CursorUp, Reset, self};
 
 const PAUSE_TIME: u64 = 25;
 const MASK_CHARS: [char; 253] = [
@@ -75,33 +75,59 @@ const MASK_CHARS: [char; 253] = [
 struct HiddenChar {
     src: char,
     mask: Option<char>,
+    ansi_code: AnsiCodes,
 }
 
 impl Display for HiddenChar {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.mask {
-            None => write!(f, "{}", self.src),
-            Some(c) => write!(f, "{}", c),
+            None => write!(f, "{}{}", self.ansi_code, self.src),
+            Some(c) => write!(f, "{}{}", Reset, c),
         }
     }
 }
 
 fn parse_input(input: &str) -> Vec<Vec<HiddenChar>> {
     let mut rng = rand::thread_rng();
-    let rr = Uniform::from(0..253);
+    let gen = Uniform::from(0..253);
+    let mut current_code = Reset;
+    let mut ris = Vec::new();
 
-    return input
+    let lines: Vec<&str> = input
         .split('\n')
         .filter(|line| !line.is_empty())
-        .map(|line| line
-             .chars()
-             .map(|c| HiddenChar {
-                 src: c,
-                 mask: if c == ' ' { None } else { Some(MASK_CHARS[rr.sample(&mut rng)]) }
-             })
-             .collect()
-        )
         .collect();
+
+    for line in lines {
+        let mut i = 0;
+        let end = line.len();
+        let mut r = Vec::new();
+
+        while i < end {
+            let hc = match AnsiCodes::new(&line[i..]) {
+                None => {
+                    i += 1;
+                    HiddenChar {
+                        src: line.chars().nth(i - 1).unwrap(),
+                        mask: if line.chars().nth(i - 1).unwrap() == ' ' { None } else { Some(MASK_CHARS[gen.sample(&mut rng)]) },
+                        ansi_code: current_code,
+                    }
+                },
+                Some((code, new_i)) => {
+                    i += new_i + 1;
+                    current_code = code;
+                    HiddenChar {
+                        src: line.chars().nth(new_i).unwrap(),
+                        mask: if line.chars().nth(new_i).unwrap() == ' ' { None } else { Some(MASK_CHARS[gen.sample(&mut rng)]) },
+                        ansi_code: current_code,
+                    }
+                }
+            };
+            r.push(hc);
+        }
+        ris.push(r);
+    }
+    return ris;
 }
 
 fn print_hidden(text: &Vec<Vec<HiddenChar>>) {
@@ -176,6 +202,10 @@ fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
 fn main() {
     let mut buf = String::new();
     stdin().read_to_string(&mut buf).unwrap();
+    //let a: Vec<&str> = buf.split("\n").collect();
+    //for x in a[a.len() - 3].chars() {
+    //    println!("{x}");
+    //}
     let mut text = parse_input(&buf);
     for line in &text {
         for c in line {
