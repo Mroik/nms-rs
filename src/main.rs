@@ -168,7 +168,7 @@ fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
         let non_enc: Vec<usize> = text[chosen_line]
             .iter()
             .zip((0..text[chosen_line].len()).collect::<Vec<usize>>())
-            .filter(|(c, _)| match c.mask { Some(_) => true, None => false })
+            .filter(|(c, _)| c.mask.is_some())
             .map(|(_, i)| i)
             .collect();
         if non_enc.is_empty() {
@@ -188,7 +188,7 @@ fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
             for c in line {
                 match c.mask {
                     None => (),
-                    _ => { c.mask = Some(MASK_CHARS[rr.sample(&mut rng)]); ()}
+                    _ => c.mask = Some(MASK_CHARS[rr.sample(&mut rng)]),
                 }
             }
         }
