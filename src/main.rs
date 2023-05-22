@@ -1,6 +1,8 @@
 use std::{println, print, io::{stdin, Read, stdout, Write}, thread::sleep, time::Duration};
-use ansi_escapes::CursorUp;
 use rand::{self, distributions::Uniform, prelude::Distribution};
+
+mod ansi;
+use ansi::AnsiCodes::CursorUp;
 
 const PAUSE_TIME: u64 = 25;
 const MASK_CHARS: [char; 253] = [

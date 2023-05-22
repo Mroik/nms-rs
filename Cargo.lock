@@ -3,12 +3,6 @@
 version = 3
 
 [[package]]
-name = "ansi-escapes"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e3c0daaaae24df5995734b689627f8fa02101bc5bbc768be3055b66a010d7af"
-
-[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -35,7 +29,6 @@ checksum = "2b00cc1c228a6782d0f076e7b232802e0c5689d41bb5df366f2a6b6621cfdfe1"
 name = "nms-rs"
 version = "0.1.0"
 dependencies = [
- "ansi-escapes",
  "rand",
 ]
 
