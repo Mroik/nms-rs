@@ -74,7 +74,7 @@ const MASK_CHARS: [char; 253] = [
 
 struct HiddenChar {
     src: char,
-    mask: char,
+    mask: Option<char>,
 }
 
 fn parse_input(input: &str) -> Vec<Vec<HiddenChar>> {
@@ -86,7 +86,7 @@ fn parse_input(input: &str) -> Vec<Vec<HiddenChar>> {
         .filter(|line| !line.is_empty())
         .map(|line| line
              .chars()
-             .map(|c| HiddenChar {src: c, mask: if c == ' ' { ' ' } else { MASK_CHARS[rr.sample(&mut rng)] }})
+             .map(|c| HiddenChar {src: c, mask: if c == ' ' { None } else { Some(MASK_CHARS[rr.sample(&mut rng)]) }})
              .collect()
         )
         .collect();
@@ -98,7 +98,10 @@ fn print_hidden(text: &Vec<Vec<HiddenChar>>) {
         .map(|line| {
             let t = line
                 .iter()
-                .map(|c| c.mask);
+                .map(|c| match c.mask {
+                    None => c.src,
+                    Some(cc) => cc,
+                });
             String::from_iter(t)
         })
         .collect::<Vec<String>>();
@@ -120,7 +123,10 @@ fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
             .for_each(|line| {
                 line
                     .iter_mut()
-                    .for_each(|c| if c.mask != ' ' { c.mask = MASK_CHARS[rr.sample(&mut rng)] })
+                    .for_each(|c| match c.mask {
+                        None => (),
+                        Some(_) => c.mask = Some(MASK_CHARS[rr.sample(&mut rng)]),
+                    })
             });
         print!("{}", CursorUp(text.len() as u16));
         print_hidden(text);
@@ -134,7 +140,7 @@ fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
         let non_enc: Vec<usize> = text[chosen_line]
             .iter()
             .zip((0..text[chosen_line].len()).collect::<Vec<usize>>())
-            .filter(|(c, _)| c.mask != c.src)
+            .filter(|(c, _)| match c.mask { Some(_) => true, None => false })
             .map(|(_, i)| i)
             .collect();
         if non_enc.is_empty() {
@@ -147,13 +153,14 @@ fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
 
         let ll = Uniform::from(0..non_enc.len());
         let col = non_enc[ll.sample(&mut rng)];
-        text[chosen_line][col].mask = text[chosen_line][col].src;
+        text[chosen_line][col].mask = None;
 
         // Pass again hidden
         for line in &mut *text {
             for c in line {
-                if c.src != c.mask {
-                    c.mask = MASK_CHARS[rr.sample(&mut rng)];
+                match c.mask {
+                    None => (),
+                    _ => { c.mask = Some(MASK_CHARS[rr.sample(&mut rng)]); ()}
                 }
             }
         }
@@ -170,7 +177,10 @@ fn main() {
     let mut text = parse_input(&buf);
     for line in &text {
         for c in line {
-            print!("{}", c.mask);
+            match c.mask {
+                None => print!("{}", c.src),
+                Some(cc) => print!("{cc}"),
+            }
             stdout().flush().unwrap();
             sleep(Duration::from_millis(PAUSE_TIME));
         }
