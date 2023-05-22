@@ -1,4 +1,4 @@
-use std::{println, print, io::{stdin, Read, stdout, Write}, thread::sleep, time::Duration};
+use std::{println, print, io::{stdin, Read, stdout, Write}, thread::sleep, time::Duration, fmt::Display, write};
 use rand::{self, distributions::Uniform, prelude::Distribution};
 
 mod ansi;
@@ -77,6 +77,15 @@ struct HiddenChar {
     mask: Option<char>,
 }
 
+impl Display for HiddenChar {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.mask {
+            None => write!(f, "{}", self.src),
+            Some(c) => write!(f, "{}", c),
+        }
+    }
+}
+
 fn parse_input(input: &str) -> Vec<Vec<HiddenChar>> {
     let mut rng = rand::thread_rng();
     let rr = Uniform::from(0..253);
@@ -86,28 +95,21 @@ fn parse_input(input: &str) -> Vec<Vec<HiddenChar>> {
         .filter(|line| !line.is_empty())
         .map(|line| line
              .chars()
-             .map(|c| HiddenChar {src: c, mask: if c == ' ' { None } else { Some(MASK_CHARS[rr.sample(&mut rng)]) }})
+             .map(|c| HiddenChar {
+                 src: c,
+                 mask: if c == ' ' { None } else { Some(MASK_CHARS[rr.sample(&mut rng)]) }
+             })
              .collect()
         )
         .collect();
 }
 
 fn print_hidden(text: &Vec<Vec<HiddenChar>>) {
-    let lines = text
-        .iter()
-        .map(|line| {
-            let t = line
-                .iter()
-                .map(|c| match c.mask {
-                    None => c.src,
-                    Some(cc) => cc,
-                });
-            String::from_iter(t)
-        })
-        .collect::<Vec<String>>();
-
-    for line in lines {
-        println!("{line}");
+    for line in text {
+        for c in line {
+            print!("{c}");
+        }
+        println!();
     }
 }
 
