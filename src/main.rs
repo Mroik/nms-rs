@@ -131,12 +131,14 @@ fn parse_input(input: &str) -> Vec<Vec<HiddenChar>> {
 }
 
 fn print_hidden(text: &Vec<Vec<HiddenChar>>) {
+    let mut s = String::new();
     for line in text {
         for c in line {
-            print!("{c}");
+            s.push_str(&c.to_string());
         }
-        println!();
+        s.push('\n');
     }
+    print!("{s}");
 }
 
 fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
