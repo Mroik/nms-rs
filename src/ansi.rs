@@ -33,7 +33,7 @@ impl AnsiCodes {
         if let Some(l) = st.find('m') {
             let div = st.find(';').unwrap_or(usize::MAX);
             if div < l {
-                match (st[2..div].parse::<u16>(), st[(div+1)..l].parse::<u16>()) {
+                match (st[2..div].parse::<u16>(), st[(div + 1)..l].parse::<u16>()) {
                     (Err(_), _) => return None,
                     (_, Err(_)) => return None,
                     (Ok(n), Ok(m)) => return Some((
