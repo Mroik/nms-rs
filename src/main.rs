@@ -208,13 +208,9 @@ fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
     }
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
     let mut buf = String::new();
     stdin().read_to_string(&mut buf).unwrap();
-    //let a: Vec<&str> = buf.split("\n").collect();
-    //for x in a[a.len() - 3].chars() {
-    //    println!("{x}");
-    //}
     let mut text = parse_input(&buf);
     for line in &text {
         for c in line {
@@ -222,10 +218,11 @@ fn main() {
                 None => print!("{}", c.src),
                 Some(cc) => print!("{cc}"),
             }
-            stdout().flush().unwrap();
+            stdout().flush()?;
             sleep(Duration::from_millis(PAUSE_TIME));
         }
         println!();
     }
     decrypt(&mut text);
+    return Ok(());
 }
