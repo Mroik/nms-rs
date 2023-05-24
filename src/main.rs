@@ -93,11 +93,17 @@ fn parse_input(input: &str) -> Vec<Vec<HiddenChar>> {
     let mut current_code = Reset;
     let mut ris = Vec::new();
 
-    let lines: Vec<String> = input
+    let mut lines: Vec<String> = input
         .split('\n')
-        .filter(|line| !line.is_empty())
         .map(|line| line.replace('\t', "        "))
         .collect();
+
+    if lines[lines.len() - 1].is_empty() {
+        lines.pop();
+    }
+    if lines[0].is_empty() {
+        lines.remove(0);
+    }
 
     for line in lines {
         let mut i = 0;
