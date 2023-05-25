@@ -149,20 +149,22 @@ fn decrypt(text: &mut Vec<HiddenChar>) {
     }
 
     // Start actual decrypt
+    let mut non_enc: Vec<usize> = text
+        .iter()
+        .zip((0..text.len()).collect::<Vec<usize>>())
+        .filter(|(c, _)| c.mask.is_some())
+        .map(|(_, i)| i)
+        .collect();
+
     loop {
-        let non_enc: Vec<usize> = text
-            .iter()
-            .zip((0..text.len()).collect::<Vec<usize>>())
-            .filter(|(c, _)| c.mask.is_some())
-            .map(|(_, i)| i)
-            .collect();
         if non_enc.is_empty() {
             break;
         }
 
         let ll = Uniform::from(0..non_enc.len());
-        let col = non_enc[ll.sample(&mut rng)];
-        text[col].mask = None;
+        let selected = ll.sample(&mut rng);
+        text[non_enc[selected]].mask = None;
+        non_enc.remove(selected);
 
         // Pass again hidden
         for c in &mut *text {
