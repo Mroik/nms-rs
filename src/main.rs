@@ -1,4 +1,4 @@
-use std::{println, print, io::{stdin, Read, stdout, Write}, thread::sleep, time::Duration, fmt::Display, write};
+use std::{print, io::{stdin, Read, stdout, Write}, thread::sleep, time::Duration, fmt::Display, write};
 use rand::{self, distributions::Uniform, prelude::Distribution};
 
 mod ansi;
@@ -87,122 +87,92 @@ impl Display for HiddenChar {
     }
 }
 
-fn parse_input(input: &str) -> Vec<Vec<HiddenChar>> {
+fn parse_input(input: &str) -> Vec<HiddenChar> {
     let mut rng = rand::thread_rng();
     let gen = Uniform::from(0..253);
     let mut current_code = Reset;
+
+    let cc = input.replace('\t', "        ");
+
+    let mut i = 0;
     let mut ris = Vec::new();
 
-    let mut lines: Vec<String> = input
-        .split('\n')
-        .map(|line| line.replace('\t', "        "))
-        .collect();
-
-    if lines[lines.len() - 1].is_empty() {
-        lines.pop();
-    }
-    if lines[0].is_empty() {
-        lines.remove(0);
-    }
-
-    for line in lines {
-        let mut i = 0;
-        let end = line.len();
-        let mut r = Vec::new();
-
-        while i < end {
-            let hc = match AnsiCodes::new(&line[i..]) {
-                None => {
-                    i += 1;
-                    HiddenChar {
-                        src: line.chars().nth(i - 1).unwrap(),
-                        mask: if line.chars().nth(i - 1).unwrap() == ' ' { None } else { Some(MASK_CHARS[gen.sample(&mut rng)]) },
-                        ansi_code: current_code,
-                    }
-                },
-                Some((code, new_i)) => {
-                    i += new_i + 1;
-                    current_code = code;
-                    HiddenChar {
-                        src: line.chars().nth(new_i).unwrap(),
-                        mask: if line.chars().nth(new_i).unwrap() == ' ' { None } else { Some(MASK_CHARS[gen.sample(&mut rng)]) },
-                        ansi_code: current_code,
-                    }
+    while i < cc.len() {
+        let found_c = cc.chars().nth(i).unwrap();
+        let n_mask = if found_c == ' ' || found_c == '\n' { None } else { Some(MASK_CHARS[gen.sample(&mut rng)]) };
+        let hc = match AnsiCodes::new(&cc[i..]) {
+            None => {
+                i += 1;
+                HiddenChar {
+                    src: cc.chars().nth(i - 1).unwrap(),
+                    mask: n_mask,
+                    ansi_code: current_code,
                 }
-            };
-            r.push(hc);
-        }
-        ris.push(r);
+            },
+            Some((code, new_i)) => {
+                i += new_i + 1;
+                current_code = code;
+                HiddenChar {
+                    src: cc.chars().nth(new_i).unwrap(),
+                    mask: n_mask,
+                    ansi_code: current_code,
+                }
+            }
+        };
+        ris.push(hc);
     }
     return ris;
 }
 
-fn print_hidden(text: &Vec<Vec<HiddenChar>>) {
+fn print_hidden(text: &Vec<HiddenChar>) {
     let mut s = String::new();
-    for line in text {
-        for c in line {
-            s.push_str(&c.to_string());
-        }
-        s.push('\n');
+    for c in text {
+        s.push_str(&c.to_string());
     }
     print!("{s}");
 }
 
-fn decrypt(text: &mut Vec<Vec<HiddenChar>>) {
+fn decrypt(text: &mut Vec<HiddenChar>) {
     let mut rng = rand::thread_rng();
     let rr = Uniform::from(0..253);
 
-    let mut enc_lines: Vec<usize> = (0..text.len()).collect();
     for _ in 0..40 {
         sleep(Duration::from_millis(PAUSE_TIME));
         text
             .iter_mut()
-            .for_each(|line| {
-                line
-                    .iter_mut()
-                    .for_each(|c| match c.mask {
-                        None => (),
-                        Some(_) => c.mask = Some(MASK_CHARS[rr.sample(&mut rng)]),
-                    })
+            .for_each(|c| match c.mask {
+                None => (),
+                Some(_) => c.mask = Some(MASK_CHARS[rr.sample(&mut rng)]),
             });
-        print!("{}", CursorUp(text.len() as u16));
+        print!("{}", CursorUp(text.iter().filter(|c| c.src == '\n').count() as u16));
         print_hidden(text);
     }
 
     // Start actual decrypt
     loop {
-        let nn = Uniform::from(0..enc_lines.len());
-        let chosen_line = enc_lines[nn.sample(&mut rng)];
-
-        let non_enc: Vec<usize> = text[chosen_line]
+        let non_enc: Vec<usize> = text
             .iter()
-            .zip((0..text[chosen_line].len()).collect::<Vec<usize>>())
+            .zip((0..text.len()).collect::<Vec<usize>>())
             .filter(|(c, _)| c.mask.is_some())
             .map(|(_, i)| i)
             .collect();
         if non_enc.is_empty() {
-            enc_lines.retain(|&it| it != chosen_line);
-            if enc_lines.is_empty() {
-                break;
-            }
-            continue;
+            break;
         }
 
         let ll = Uniform::from(0..non_enc.len());
         let col = non_enc[ll.sample(&mut rng)];
-        text[chosen_line][col].mask = None;
+        text[col].mask = None;
 
         // Pass again hidden
-        for line in &mut *text {
-            for c in line {
-                match c.mask {
-                    None => (),
-                    _ => c.mask = Some(MASK_CHARS[rr.sample(&mut rng)]),
-                }
+        for c in &mut *text {
+            match c.mask {
+                None => (),
+                _ => c.mask = Some(MASK_CHARS[rr.sample(&mut rng)]),
             }
         }
 
-        print!("{}", CursorUp(text.len() as u16));
+        print!("{}", CursorUp(text.iter().filter(|c| c.src == '\n').count() as u16));
         print_hidden(text);
         sleep(Duration::from_millis(PAUSE_TIME));
     }
@@ -212,17 +182,16 @@ fn main() -> std::io::Result<()> {
     let mut buf = String::new();
     stdin().read_to_string(&mut buf).unwrap();
     let mut text = parse_input(&buf);
-    for line in &text {
-        for c in line {
-            match c.mask {
-                None => print!("{}", c.src),
-                Some(cc) => print!("{cc}"),
-            }
-            stdout().flush()?;
-            sleep(Duration::from_millis(PAUSE_TIME));
+
+    for c in &text {
+        match c.mask {
+            None => print!("{}", c.src),
+            Some(cc) => print!("{cc}"),
         }
-        println!();
+        stdout().flush()?;
+        sleep(Duration::from_millis(PAUSE_TIME));
     }
+
     decrypt(&mut text);
     return Ok(());
 }
