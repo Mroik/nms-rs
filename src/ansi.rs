@@ -36,21 +36,15 @@ impl AnsiCodes {
                 match (st[2..div].parse::<u16>(), st[(div + 1)..l].parse::<u16>()) {
                     (Err(_), _) => return None,
                     (_, Err(_)) => return None,
-                    (Ok(n), Ok(m)) => return Some((
-                            Self::SGR2(n, m),
-                            l
-                    ))
+                    (Ok(n), Ok(m)) => return Some((Self::SGR2(n, m), l)),
                 }
             } else {
                 match st[2..l].parse() {
                     Err(_) => return None,
-                    Ok(n) => return Some((
-                            Self::SGR(n),
-                            l
-                    )),
+                    Ok(n) => return Some((Self::SGR(n), l)),
                 }
             }
         }
-        return None
+        return None;
     }
 }
