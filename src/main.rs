@@ -72,23 +72,20 @@ fn parse_input(input: &str) -> Vec<HiddenChar> {
         } else {
             Some(MASK_CHARS[gen.sample(&mut rng)])
         };
-        let hc = match AnsiCodes::new(&cc[i..]) {
-            None => {
-                i += 1;
-                HiddenChar {
-                    src: cc.chars().nth(i - 1).unwrap(),
-                    mask: n_mask,
-                    ansi_code: current_code,
-                }
+        let hc = if let Some((code, new_i)) = AnsiCodes::new(&cc[i..]) {
+            i += new_i + 1;
+            current_code = code;
+            HiddenChar {
+                src: cc.chars().nth(new_i).unwrap(),
+                mask: n_mask,
+                ansi_code: current_code,
             }
-            Some((code, new_i)) => {
-                i += new_i + 1;
-                current_code = code;
-                HiddenChar {
-                    src: cc.chars().nth(new_i).unwrap(),
-                    mask: n_mask,
-                    ansi_code: current_code,
-                }
+        } else {
+            i += 1;
+            HiddenChar {
+                src: cc.chars().nth(i - 1).unwrap(),
+                mask: n_mask,
+                ansi_code: current_code,
             }
         };
         ris.push(hc);
